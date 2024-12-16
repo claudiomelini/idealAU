@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafici T e RH</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f7f9fc;
+            color: #333;
+        }
+        header {
+            text-align: center;
+            padding: 20px;
+            background: #007BFF;
+            color: white;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Monitoraggio T e RH</h1>
+    </header>
+    <div class="container">
+        <h2>Temperatura</h2>
+        <canvas id="temperatureChart"></canvas>
+        <h2>Umidità Relativa</h2>
+        <canvas id="humidityChart"></canvas>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+
+        // Configurazione Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDY2-h0Tbejk0SaOck4opoUPFuP5jA4Jk",
+            authDomain: "fir-esp32-bafd9.firebaseapp.com",
+            databaseURL: "https://fir-esp32-bafd9-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "fir-esp32-bafd9",
+            storageBucket: "fir-esp32-bafd9.firebasestorage.app",
+            messagingSenderId: "718982008677",
+            appId: "1:718982008677:web:ccb972195268d5a1be1b8c",
+        };
+        
+        // Inizializza Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Referenze ai dati
+        const sensorDataRef = ref(db, "Home/SensorData");
+
+        // Array per dati
+        let timestamps = [];
+        let temperatures = [];
+        let humidities = [];
+
+        // Recupero dati
+        onValue(sensorDataRef, (snapshot) => {
+            const data = snapshot.val();
+            timestamps = [];
+            temperatures = [];
+            humidities = [];
+
+            for (const key in data) {
+                timestamps.push(new Date(key * 1000).toLocaleTimeString());
+                temperatures.push(data[key].Temperature);
+                humidities.push(data[key].Humidity);
+            }
+
+            updateCharts();
+        });
+
+        // Grafico Temperatura
+        const temperatureCtx = document.getElementById("temperatureChart").getContext("2d");
+        const temperatureChart = new Chart(temperatureCtx, {
+            type: "line",
+            data: {
+                labels: timestamps,
+                datasets: [{
+                    label: "Temperatura (°C)",
+                    data: temperatures,
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    backgroundColor: "rgba(255, 99, 132, 0.2)",
+                    borderWidth: 1,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "top"
+                    }
+                }
+            }
+        });
+
+        // Grafico Umidità
+        const humidityCtx = document.getElementById("humidityChart").getContext("2d");
+        const humidityChart = new Chart(humidityCtx, {
+            type: "line",
+            data: {
+                labels: timestamps,
+                datasets: [{
+                    label: "Umidità (%)",
+                    data: humidities,
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    backgroundColor: "rgba(54, 162, 235, 0.2)",
+                    borderWidth: 1,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "top"
+                    }
+                }
+            }
+        });
+
+        // Aggiorna grafici
+        function updateCharts() {
+            temperatureChart.data.labels = timestamps;
+            temperatureChart.data.datasets[0].data = temperatures;
+            temperatureChart.update();
+
+            humidityChart.data.labels = timestamps;
+            humidityChart.data.datasets[0].data = humidities;
+            humidityChart.update();
+        }
+    </script>
+</body>
+</html>
