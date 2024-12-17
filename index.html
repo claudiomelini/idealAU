@@ -80,7 +80,7 @@
 
             if (data) {
                 // Raccogliamo solo gli ultimi 4 valori
-                const latestKeys = Object.keys(data).slice(-30);
+                const latestKeys = Object.keys(data).slice(-4);
                 timestamps = [];
                 temperatures = [];
                 humidities = [];
@@ -158,7 +158,7 @@
                         x: {
                             ticks: {
                                 autoSkip: true,
-                                maxTicksLimit: 4
+                                maxTicksLimit: 30
                             }
                         }
                     }
