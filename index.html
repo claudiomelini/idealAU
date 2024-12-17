@@ -68,23 +68,26 @@
         let temperatures = [];
         let humidities = [];
 
-        // Recupero dati
-        onValue(sensorDataRef, (snapshot) => {
-            const data = snapshot.val();
-            const keys = Object.keys(data).slice(-500); // Prendi solo gli ultimi 500 elementi
+// Recupero dati
+onValue(sensorDataRef, (snapshot) => {
+    const data = snapshot.val();
+    const keys = Object.keys(data).slice(-500); // Prendi solo gli ultimi 500 elementi
 
-            timestamps = [];
-            temperatures = [];
-            humidities = [];
+    timestamps = [];
+    temperatures = [];
+    humidities = [];
 
-            keys.forEach((key) => {
-                timestamps.push(new Date(key * 1000).toLocaleTimeString()); // Mostra solo l'ora
-                temperatures.push(data[key].Temperature);
-                humidities.push(data[key].Humidity);
-            });
+    keys.forEach((key) => {
+        const date = new Date(key * 1000); // Timestamp in millisecondi
+        timestamps.push(
+            date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" }) // Ora locale in Italia
+        );
+        temperatures.push(data[key].Temperature);
+        humidities.push(data[key].Humidity);
+    });
 
-            updateCharts();
-        });
+    updateCharts();
+});
 
         // Grafico Temperatura
         const temperatureCtx = document.getElementById("temperatureChart").getContext("2d");
