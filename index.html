@@ -60,7 +60,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Referenze ai dati
+        // Referenza ai dati
         const sensorDataRef = ref(db, "Home/SensorData");
 
         // Array per dati
@@ -68,78 +68,60 @@
         let temperatures = [];
         let humidities = [];
 
-// Recupero dati
-onValue(sensorDataRef, (snapshot) => {
-    const data = snapshot.val();
-    const keys = Object.keys(data).slice(-500); // Prendi solo gli ultimi 500 elementi
-
-    timestamps = [];
-    temperatures = [];
-    humidities = [];
-
-    keys.forEach((key) => {
-        const date = new Date(key * 1000); // Timestamp in millisecondi
-        timestamps.push(
-            date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" }) // Ora locale in Italia
-        );
-        temperatures.push(data[key].Temperature);
-        humidities.push(data[key].Humidity);
-    });
-
-    updateCharts();
-});
-
         // Funzione per selezionare 4 valori all'ora
-function filterData4PerHour(data) {
-    const filteredTimestamps = [];
-    const filteredTemperatures = [];
-    const filteredHumidities = [];
+        function filterData4PerHour(data) {
+            const filteredTimestamps = [];
+            const filteredTemperatures = [];
+            const filteredHumidities = [];
 
-    let lastHour = null;
-    let count = 0;
+            let lastHour = null;
 
-    Object.keys(data).forEach((key) => {
-        const timestamp = key * 1000; // Timestamp in millisecondi
-        const date = new Date(timestamp);
-        const currentHour = date.getHours();
-        const currentMinute = date.getMinutes();
+            Object.keys(data).forEach((key) => {
+                const timestamp = key * 1000; // Timestamp in millisecondi
+                const date = new Date(timestamp);
+                const currentHour = date.getHours();
+                const currentMinute = date.getMinutes();
 
-        // Prendi solo 4 valori all'ora (esempio: minuti 0, 15, 30, 45)
-        if (currentHour !== lastHour || [0, 15, 30, 45].includes(currentMinute)) {
-            filteredTimestamps.push(
-                date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" })
-            );
-            filteredTemperatures.push(data[key].Temperature);
-            filteredHumidities.push(data[key].Humidity);
+                // Prendi solo 4 valori all'ora (esempio: minuti 0, 15, 30, 45)
+                if (currentHour !== lastHour || [0, 15, 30, 45].includes(currentMinute)) {
+                    filteredTimestamps.push(
+                        date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" })
+                    );
+                    filteredTemperatures.push(data[key].Temperature);
+                    filteredHumidities.push(data[key].Humidity);
 
-            count++;
-            lastHour = currentHour;
+                    lastHour = currentHour;
+                }
+            });
+
+            return { filteredTimestamps, filteredTemperatures, filteredHumidities };
         }
-    });
 
-    return { filteredTimestamps, filteredTemperatures, filteredHumidities };
-}
+        // Recupero dati e aggiornamento grafici
+        onValue(sensorDataRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
 
-// Recupero dati e filtraggio
-onValue(sensorDataRef, (snapshot) => {
-    const data = snapshot.val();
-    const keys = Object.keys(data).slice(-500); // Prendi solo gli ultimi 500 elementi
+            // Prendi solo gli ultimi 500 elementi
+            const keys = Object.keys(data).slice(-500);
+            const recentData = {};
+            keys.forEach((key) => {
+                recentData[key] = data[key];
+            });
 
-    const recentData = {};
-    keys.forEach((key) => {
-        recentData[key] = data[key];
-    });
+            // Filtra i dati
+            const { filteredTimestamps, filteredTemperatures, filteredHumidities } = filterData4PerHour(recentData);
 
-    const { filteredTimestamps, filteredTemperatures, filteredHumidities } = filterData4PerHour(recentData);
+            // Aggiorna array globali
+            timestamps = filteredTimestamps;
+            temperatures = filteredTemperatures;
+            humidities = filteredHumidities;
 
-    timestamps = filteredTimestamps;
-    temperatures = filteredTemperatures;
-    humidities = filteredHumidities;
+            // Aggiorna grafici
+            updateCharts();
+        });
 
-    updateCharts();
-});
-
-        // Grafico Temperatura
+        // Inizializzazione grafici
         const temperatureCtx = document.getElementById("temperatureChart").getContext("2d");
         const temperatureChart = new Chart(temperatureCtx, {
             type: "line",
@@ -164,7 +146,6 @@ onValue(sensorDataRef, (snapshot) => {
             }
         });
 
-        // Grafico Umidità
         const humidityCtx = document.getElementById("humidityChart").getContext("2d");
         const humidityChart = new Chart(humidityCtx, {
             type: "line",
@@ -191,15 +172,16 @@ onValue(sensorDataRef, (snapshot) => {
 
         // Aggiorna grafici
         function updateCharts() {
-            temperatureChart.data.labels = timestamps;
-            temperatureChart.data.datasets[0].data = temperatures;
-            temperatureChart.update();
+            if (temperatureChart && humidityChart) {
+                temperatureChart.data.labels = timestamps;
+                temperatureChart.data.datasets[0].data = temperatures;
+                temperatureChart.update();
 
-            humidityChart.data.labels = timestamps;
-            humidityChart.data.datasets[0].data = humidities;
-            humidityChart.update();
+                humidityChart.data.labels = timestamps;
+                humidityChart.data.datasets[0].data = humidities;
+                humidityChart.update();
+            }
         }
     </script>
 </body>
 </html>
-
