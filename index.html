@@ -84,8 +84,11 @@
 
                 // Prendi solo 4 valori all'ora (esempio: minuti 0, 15, 30, 45)
                 if (currentHour !== lastHour || [0, 15, 30, 45].includes(currentMinute)) {
+                   // Aggiusta il fuso orario (UTC+1 per l'Italia)
+                    const adjustedDate = new Date(timestamp + 3600 * 1000);
                     filteredTimestamps.push(
-                        date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" })
+                    adjustedDate.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" })
+                    );
                     );
                     filteredTemperatures.push(data[key].Temperature);
                     filteredHumidities.push(data[key].Humidity);
