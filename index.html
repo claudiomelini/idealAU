@@ -43,7 +43,7 @@
     </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+        import { getDatabase, ref, query, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
         // Configurazione Firebase
         const firebaseConfig = {
@@ -60,8 +60,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Referenze ai dati
-        const sensorDataRef = ref(db, "Home/SensorData");
+        // Referenza con limite agli ultimi 4 record
+        const sensorDataRef = query(ref(db, "Home/SensorData"), limitToLast(4));
 
         // Array per dati
         let timestamps = [];
@@ -74,32 +74,21 @@
             return date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" });
         }
 
-        // Funzione per recuperare e filtrare i dati
-        function processData(data) {
-            const filteredTimestamps = [];
-            const filteredTemperatures = [];
-            const filteredHumidities = [];
-
-            Object.keys(data).forEach((key) => {
-                const timestamp = parseInt(key); // Timestamp UNIX in secondi
-                filteredTimestamps.push(convertToLocalTime(timestamp));
-                filteredTemperatures.push(data[key].Temperature);
-                filteredHumidities.push(data[key].Humidity);
-            });
-
-            return { filteredTimestamps, filteredTemperatures, filteredHumidities };
-        }
-
         // Recupero dati da Firebase
         onValue(sensorDataRef, (snapshot) => {
             const data = snapshot.val();
 
             if (data) {
-                const { filteredTimestamps, filteredTemperatures, filteredHumidities } = processData(data);
+                timestamps = [];
+                temperatures = [];
+                humidities = [];
 
-                timestamps = filteredTimestamps.slice(-500); // Mostra solo gli ultimi 500 dati
-                temperatures = filteredTemperatures.slice(-500);
-                humidities = filteredHumidities.slice(-500);
+                Object.keys(data).forEach((key) => {
+                    const timestamp = parseInt(key); // Timestamp UNIX in secondi
+                    timestamps.push(convertToLocalTime(timestamp));
+                    temperatures.push(data[key].Temperature);
+                    humidities.push(data[key].Humidity);
+                });
 
                 updateCharts();
             }
@@ -131,7 +120,7 @@
                     x: {
                         ticks: {
                             autoSkip: true,
-                            maxTicksLimit: 10
+                            maxTicksLimit: 4
                         }
                     }
                 }
@@ -164,7 +153,7 @@
                     x: {
                         ticks: {
                             autoSkip: true,
-                            maxTicksLimit: 10
+                            maxTicksLimit: 4
                         }
                     }
                 }
