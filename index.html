@@ -79,8 +79,8 @@
             const data = snapshot.val();
 
             if (data) {
-                // Raccogliamo solo gli ultimi 4 valori
-                const latestKeys = Object.keys(data).slice(-4);
+                // Raccogliamo solo gli ultimi 30 valori
+                const latestKeys = Object.keys(data).slice(-30);  // Cambiato a 30 valori
                 timestamps = [];
                 temperatures = [];
                 humidities = [];
@@ -125,7 +125,7 @@
                         x: {
                             ticks: {
                                 autoSkip: true,
-                                maxTicksLimit: 30
+                                maxTicksLimit: 10
                             }
                         }
                     }
@@ -158,7 +158,7 @@
                         x: {
                             ticks: {
                                 autoSkip: true,
-                                maxTicksLimit: 30
+                                maxTicksLimit: 10
                             }
                         }
                     }
