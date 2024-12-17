@@ -43,7 +43,7 @@
     </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-        import { getDatabase, ref, query, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
         // Configurazione Firebase
         const firebaseConfig = {
@@ -60,10 +60,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Referenza con limite agli ultimi 4 record
-        const sensorDataRef = query(ref(db, "Home/SensorData"), limitToLast(4));
+        // Referenza ai dati
+        const sensorDataRef = ref(db, "Home/SensorData");
 
-        // Array per dati
+        // Array per i dati
         let timestamps = [];
         let temperatures = [];
         let humidities = [];
@@ -74,101 +74,96 @@
             return date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" });
         }
 
-        // Recupero dati da Firebase
+        // Recupero dei dati da Firebase
         onValue(sensorDataRef, (snapshot) => {
             const data = snapshot.val();
 
             if (data) {
+                // Raccogliamo solo gli ultimi 4 valori
+                const latestKeys = Object.keys(data).slice(-4);
                 timestamps = [];
                 temperatures = [];
                 humidities = [];
 
-                Object.keys(data).forEach((key) => {
+                latestKeys.forEach((key) => {
                     const timestamp = parseInt(key); // Timestamp UNIX in secondi
                     timestamps.push(convertToLocalTime(timestamp));
                     temperatures.push(data[key].Temperature);
                     humidities.push(data[key].Humidity);
                 });
 
+                // Aggiorna i grafici
                 updateCharts();
             }
         });
 
-        // Configurazione grafico Temperatura
-        const temperatureCtx = document.getElementById("temperatureChart").getContext("2d");
-        const temperatureChart = new Chart(temperatureCtx, {
-            type: "line",
-            data: {
-                labels: timestamps,
-                datasets: [{
-                    label: "Temperatura (°C)",
-                    data: temperatures,
-                    borderColor: "rgba(255, 99, 132, 1)",
-                    backgroundColor: "rgba(255, 99, 132, 0.2)",
-                    borderWidth: 1,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: "top"
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 4
-                        }
-                    }
-                }
-            }
-        });
-
-        // Configurazione grafico Umidità
-        const humidityCtx = document.getElementById("humidityChart").getContext("2d");
-        const humidityChart = new Chart(humidityCtx, {
-            type: "line",
-            data: {
-                labels: timestamps,
-                datasets: [{
-                    label: "Umidità (%)",
-                    data: humidities,
-                    borderColor: "rgba(54, 162, 235, 1)",
-                    backgroundColor: "rgba(54, 162, 235, 0.2)",
-                    borderWidth: 1,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: "top"
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 4
-                        }
-                    }
-                }
-            }
-        });
-
-        // Aggiorna i grafici
+        // Funzione per aggiornare i grafici
         function updateCharts() {
-            temperatureChart.data.labels = timestamps;
-            temperatureChart.data.datasets[0].data = temperatures;
-            temperatureChart.update();
+            // Grafico Temperatura
+            const temperatureCtx = document.getElementById("temperatureChart").getContext("2d");
+            const temperatureChart = new Chart(temperatureCtx, {
+                type: "line",
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: "Temperatura (°C)",
+                        data: temperatures,
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        backgroundColor: "rgba(255, 99, 132, 0.2)",
+                        borderWidth: 1,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: "top"
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 4
+                            }
+                        }
+                    }
+                }
+            });
 
-            humidityChart.data.labels = timestamps;
-            humidityChart.data.datasets[0].data = humidities;
-            humidityChart.update();
+            // Grafico Umidità
+            const humidityCtx = document.getElementById("humidityChart").getContext("2d");
+            const humidityChart = new Chart(humidityCtx, {
+                type: "line",
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: "Umidità (%)",
+                        data: humidities,
+                        borderColor: "rgba(54, 162, 235, 1)",
+                        backgroundColor: "rgba(54, 162, 235, 0.2)",
+                        borderWidth: 1,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: "top"
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 4
+                            }
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
