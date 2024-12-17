@@ -68,9 +68,9 @@
         let temperatures = [];
         let humidities = [];
 
-        // Funzione per convertire il timestamp in ora locale (Roma)
-        function convertToLocalTime(timestamp) {
-            const date = new Date(timestamp * 1000); // Converte in millisecondi
+        // Funzione per ottenere l'orario locale dal browser
+        function getLocalTime() {
+            const date = new Date(); // Ora corrente
             return date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" });
         }
 
@@ -86,8 +86,8 @@
                 humidities = [];
 
                 latestKeys.forEach((key) => {
-                    const timestamp = parseInt(key); // Timestamp UNIX in secondi
-                    timestamps.push(convertToLocalTime(timestamp));
+                    // Usa l'ora corrente del browser per la data
+                    timestamps.push(getLocalTime()); 
                     temperatures.push(data[key].Temperature);
                     humidities.push(data[key].Humidity);
                 });
@@ -125,7 +125,7 @@
                         x: {
                             ticks: {
                                 autoSkip: true,
-                                maxTicksLimit: 4
+                                maxTicksLimit: 30
                             }
                         }
                     }
