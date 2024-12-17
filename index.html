@@ -60,7 +60,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Referenza ai dati
+        // Referenze ai dati
         const sensorDataRef = ref(db, "Home/SensorData");
 
         // Array per dati
@@ -68,7 +68,13 @@
         let temperatures = [];
         let humidities = [];
 
-        // Funzione per selezionare 4 valori all'ora
+        // Funzione per convertire il timestamp in ora locale
+        function convertToLocalTime(timestamp) {
+            const date = new Date(timestamp * 1000); // Converte in millisecondi
+            return date.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" });
+        }
+
+        // Funzione per filtrare 4 valori all'ora
         function filterData4PerHour(data) {
             const filteredTimestamps = [];
             const filteredTemperatures = [];
@@ -82,14 +88,9 @@
                 const currentHour = date.getHours();
                 const currentMinute = date.getMinutes();
 
-                // Prendi solo 4 valori all'ora (esempio: minuti 0, 15, 30, 45)
+                // Prendi solo 4 valori all'ora (minuti 0, 15, 30, 45)
                 if (currentHour !== lastHour || [0, 15, 30, 45].includes(currentMinute)) {
-                   // Aggiusta il fuso orario (UTC+1 per l'Italia)
-                    const adjustedDate = new Date(timestamp + 3600 * 1000);
-                    filteredTimestamps.push(
-                    adjustedDate.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" })
-                    );
-                    );
+                    filteredTimestamps.push(convertToLocalTime(key));
                     filteredTemperatures.push(data[key].Temperature);
                     filteredHumidities.push(data[key].Humidity);
 
@@ -100,31 +101,26 @@
             return { filteredTimestamps, filteredTemperatures, filteredHumidities };
         }
 
-        // Recupero dati e aggiornamento grafici
+        // Recupero dati e filtraggio
         onValue(sensorDataRef, (snapshot) => {
             const data = snapshot.val();
-            if (!data) return;
+            const keys = Object.keys(data).slice(-500); // Prendi solo gli ultimi 500 elementi
 
-            // Prendi solo gli ultimi 500 elementi
-            const keys = Object.keys(data).slice(-500);
             const recentData = {};
             keys.forEach((key) => {
                 recentData[key] = data[key];
             });
 
-            // Filtra i dati
             const { filteredTimestamps, filteredTemperatures, filteredHumidities } = filterData4PerHour(recentData);
 
-            // Aggiorna array globali
             timestamps = filteredTimestamps;
             temperatures = filteredTemperatures;
             humidities = filteredHumidities;
 
-            // Aggiorna grafici
             updateCharts();
         });
 
-        // Inizializzazione grafici
+        // Configurazione grafico Temperatura
         const temperatureCtx = document.getElementById("temperatureChart").getContext("2d");
         const temperatureChart = new Chart(temperatureCtx, {
             type: "line",
@@ -149,6 +145,7 @@
             }
         });
 
+        // Configurazione grafico Umidità
         const humidityCtx = document.getElementById("humidityChart").getContext("2d");
         const humidityChart = new Chart(humidityCtx, {
             type: "line",
@@ -173,17 +170,15 @@
             }
         });
 
-        // Aggiorna grafici
+        // Aggiorna i grafici
         function updateCharts() {
-            if (temperatureChart && humidityChart) {
-                temperatureChart.data.labels = timestamps;
-                temperatureChart.data.datasets[0].data = temperatures;
-                temperatureChart.update();
+            temperatureChart.data.labels = timestamps;
+            temperatureChart.data.datasets[0].data = temperatures;
+            temperatureChart.update();
 
-                humidityChart.data.labels = timestamps;
-                humidityChart.data.datasets[0].data = humidities;
-                humidityChart.update();
-            }
+            humidityChart.data.labels = timestamps;
+            humidityChart.data.datasets[0].data = humidities;
+            humidityChart.update();
         }
     </script>
 </body>
