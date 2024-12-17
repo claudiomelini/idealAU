@@ -33,7 +33,7 @@
 </head>
 <body>
     <header>
-        <h1>Monitoraggio T e RH</h1>
+        <h1>Monitoraggio T e RH - Sala CM</h1>
     </header>
     <div class="container">
         <h2>Temperatura</h2>
@@ -55,7 +55,7 @@
             messagingSenderId: "718982008677",
             appId: "1:718982008677:web:ccb972195268d5a1be1b8c",
         };
-        
+
         // Inizializza Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -71,15 +71,17 @@
         // Recupero dati
         onValue(sensorDataRef, (snapshot) => {
             const data = snapshot.val();
+            const keys = Object.keys(data).slice(-500); // Prendi solo gli ultimi 500 elementi
+
             timestamps = [];
             temperatures = [];
             humidities = [];
 
-            for (const key in data) {
-                timestamps.push(new Date(key * 1000).toLocaleTimeString());
+            keys.forEach((key) => {
+                timestamps.push(new Date(key * 1000).toLocaleTimeString()); // Mostra solo l'ora
                 temperatures.push(data[key].Temperature);
                 humidities.push(data[key].Humidity);
-            }
+            });
 
             updateCharts();
         });
@@ -147,3 +149,4 @@
     </script>
 </body>
 </html>
+
